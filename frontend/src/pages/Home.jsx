@@ -6,8 +6,8 @@ export default function Home() {
 
   useEffect(() => {
     fetch(`${import.meta.env.VITE_API_URL}/api/health`)
-      .then((r) => r.json()) // Parse JSON from response
-      .then((d) => setApi(d.status ?? "unknown")) // Update UI with backend status
+      .then((res) => res.json()) // Parse JSON from response
+      .then((data) => setApi(data.status ?? "unknown")) // Update UI with backend status
       .catch(() => setApi("error")); // If fetch fails, show error
   }, []); // '[]' means run only once (when the component renders).
 
