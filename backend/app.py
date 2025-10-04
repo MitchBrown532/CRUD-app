@@ -8,12 +8,12 @@ CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173"]}})
 ITEMS = []
 NEXT_ID = 1
 
-# Health check
+# Health Check
 @app.get("/api/health")
 def health():
     return jsonify({"status": "ok"})
 
-# Fetch Items
+# Get Items
 @app.get("/api/items")
 def list_items():
     return jsonify(ITEMS)
