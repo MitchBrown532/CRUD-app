@@ -3,22 +3,38 @@ import { useEffect, useState } from "react";
 export default function Items() {
   const API = import.meta.env.VITE_API_URL;
 
-  // Store API results, loading state, and any errors
+  // For API results, loading state, and any errors
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
-  // Local edit state per id (id -> draft name)
+  // For editing entries
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState("");
 
-  // Fetch item list
+  // Search state + debounce
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+
+  // Set debounce
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQuery(query), 300); // debounce 300ms
+    return () => clearTimeout(t);
+  }, [query]);
+
+  // Fetch item list (On load & search)
   useEffect(() => {
     async function load() {
+      setLoading(true);
+      setErr("");
+
       try {
-        const res = await fetch(`${API}/api/items`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`); // error catch
-        setItems(await res.json()); // store item list
+        const url = `${API}/api/items${
+          debouncedQuery ? `?q=${encodeURIComponent(debouncedQuery)}` : ""
+        }`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        setItems(await res.json());
       } catch (e) {
         setErr(String(e));
       } finally {
@@ -26,7 +42,7 @@ export default function Items() {
       }
     }
     load();
-  }, []); // fetch only once (upon page load)
+  }, [API, debouncedQuery]);
 
   // Start edit: store id + prefill draft name
   function startEdit(it) {
@@ -76,14 +92,22 @@ export default function Items() {
     }
   }
 
-  // UI control depending on state
-  if (loading) return <p style={{ padding: 16 }}>Loading...</p>;
-  if (err) return <p style={{ padding: 16, color: "crimson" }}>Error: {err}</p>;
-
   // If no error - show list. If empty, display message.
   return (
     <div style={{ padding: 16 }}>
       <h1>Items</h1>
+
+      {/* Search */}
+      <input
+        value={query}
+        onChange={(e) => setQuery(e.target.value)}
+        placeholder="Search items…"
+        style={{ padding: 8, margin: "12px 0", width: "100%", maxWidth: 420 }}
+      />
+
+      {/* Status messages inline */}
+      {err && <p style={{ color: "crimson" }}>Error: {err}</p>}
+      {loading && <p style={{ opacity: 0.7 }}>Searching…</p>}
 
       {/* Empty state */}
       {items.length === 0 && <p>No items yet.</p>}
