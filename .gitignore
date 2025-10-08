@@ -8,8 +8,6 @@ __pycache__/
 *.pyc
 
 # Local SQLite database
-app.db
-backend/app.db
 backend/instance/
 
 # OS / misc
