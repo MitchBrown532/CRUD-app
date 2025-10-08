@@ -10,10 +10,11 @@ __pycache__/
 # Local SQLite database
 app.db
 backend/app.db
-instance/
+backend/instance/
 
 # OS / misc
 .DS_Store
 .env
 frontend/.env
 backend/.env
+backend/instance/app.db
