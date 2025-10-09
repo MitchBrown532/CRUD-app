@@ -1,7 +1,6 @@
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 import Home from "./pages/Home";
 import Items from "./pages/Items";
-import AddItem from "./pages/AddItem";
 
 function Navbar() {
   const linkStyle = { marginRight: 12 };
@@ -12,9 +11,6 @@ function Navbar() {
       </Link>
       <Link to="/items" style={linkStyle}>
         Items
-      </Link>
-      <Link to="/add" style={linkStyle}>
-        Add Item
       </Link>
     </nav>
   );
@@ -27,7 +23,6 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/items" element={<Items />} />
-        <Route path="/add" element={<AddItem />} />
       </Routes>
     </BrowserRouter>
   );

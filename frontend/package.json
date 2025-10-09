@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start:all": "concurrently -n frontend,backend -c \"green,blue\" \"npm run dev\" \"cd ../backend && venv\\Scripts\\python.exe app.py\""
+    "start:all": "concurrently -n frontend,backend -c \"green,blue\" \"npm run dev\" \"cd ../backend && venv\\Scripts\\Activate && venv\\Scripts\\python.exe app.py\""
   },
   "dependencies": {
     "react": "^19.1.1",
