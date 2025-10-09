@@ -11,41 +11,28 @@ export default function Items() {
   // Add
   const [newName, setNewName] = useState("");
   const [adding, setAdding] = useState(false);
+  const addInputRef = useRef(null); // auto-focus input when add starts
 
   // Edit
-  // Ref allows for using enter + esc
   const [editingId, setEditingId] = useState(null);
   const [draft, setDraft] = useState("");
   const [savingId, setSavingId] = useState(null);
-  const editRef = useRef(null);
+  const editRef = useRef(null); // auto-focus input when edit starts
 
   // Search
-  // Debounce allows for delay before re-rendering (rather than immediately after each keystroke)
   const [query, setQuery] = useState("");
-  const debouncedQuery = useDebounce(query, 300);
+  const debouncedQuery = useDebounce(query, 300); // delay before re-rendering (rather than immediately after each keystroke)
 
   // Delete + Confirm
   const [confirmId, setConfirmId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
   // ------------- Effects -------------
-  // Fetch items for load & search
+  // Fetch List
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      setLoading(true);
-      setErr("");
-      try {
-        const qs = debouncedQuery
-          ? `?q=${encodeURIComponent(debouncedQuery)}`
-          : "";
-        const data = await api(`/api/items${qs}`);
-        if (!cancelled) setItems(data);
-      } catch (e) {
-        if (!cancelled) setErr(e.message || "Failed to load items");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
+      if (!cancelled) await loadItems(debouncedQuery);
     })();
     return () => {
       cancelled = true;
@@ -59,6 +46,21 @@ export default function Items() {
   }, [editingId]);
 
   // ------------- Methods -------------
+  // --- Fetch ---
+  async function loadItems(q) {
+    setLoading(true);
+    setErr("");
+    try {
+      const qs = q ? `?q=${encodeURIComponent(q)}` : "";
+      const data = await api(`/api/items${qs}`);
+      setItems(data);
+    } catch (e) {
+      setErr(e.message || "Failed to load items");
+    } finally {
+      setLoading(false);
+    }
+  }
+
   // --- Add ---
   async function onAdd(e) {
     e.preventDefault();
@@ -67,10 +69,13 @@ export default function Items() {
     setAdding(true);
     setErr("");
     try {
-      const created = await api("/api/items", {
+      await api("/api/items", {
         method: "POST",
         body: JSON.stringify({ name }),
       });
+      setNewName(""); // clear field
+      addInputRef.current?.focus(); // refocus for fast entry
+      await loadItems(); // reload list after update
     } catch (e) {
       setErr(e.message);
     } finally {
@@ -165,6 +170,7 @@ export default function Items() {
       {/* Add */}
       <form onSubmit={onAdd} style={{ marginBottom: 16 }}>
         <input
+          ref={addInputRef}
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="New item name"
