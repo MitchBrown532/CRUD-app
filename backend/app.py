@@ -1,10 +1,12 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 from models import db, Item
-
+from math import ceil
+from sqlalchemy import func
+from typing import Optional
 
 # Create the app
-def create_app():
+def create_app(test_config: Optional[dict] = None):
     """
     Using Factory pattern (instead of a global object). It is the industry standard for a reason:
         1. Easier Testing:
@@ -16,13 +18,19 @@ def create_app():
     """
     app = Flask(__name__)
 
-    # Enable CORS for React Frontend
+    # CORS: allow React dev server only
     CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173"]}})
 
     # Configure DB (creates app.db in backend folder)
     app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db" # URI not URL - Uniform Resource Identifier (URI) is standard for DB connection strings, URLs are a type of URI specifically used for location (e.g. web address)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+    # Apply testing configs BEFORE init (if necessary)
+    if test_config:
+        app.config.update(test_config)
+
     db.init_app(app)
+    
 
     # ---------------------- ROUTES ---------------------- #
     # Health check
@@ -34,12 +42,20 @@ def create_app():
     @app.get("/api/items")
     def list_items():
         """
-            Return a list of all items in the database.
-            Optional query param ?q=term filters results by name.
+        List items with pagination and optional filtering by name.
+        Query params:
+            q:     filter (default "")
+            page:  page number (>= 1, default 1)
+            limit: page size (1<= limit <= 50, default 10)
+        Response:
+            { items, page, pages, total, limit }
         """
-        # Get optional search term from query string (e.g. /api/items?q=test)
-        q = request.args.get("q", "", type=str).strip()
-        
+        # Init Responses
+        q = (request.args.get("q") or "").strip()
+        page = max(request.args.get("page", 1, type=int), 1)
+        limit = request.args.get("limit", 10, type=int)
+        limit = min(max(limit, 1), 50)
+            
         # Start base query for all Item records
         query = Item.query
 
@@ -47,74 +63,110 @@ def create_app():
         if q:
             query = query.filter(Item.name.ilike(f"%{q}%"))
         
-         # Fetch results ordered by newest first
-        items = [it.to_dict() for it in query.order_by(Item.id.desc()).all()]
-        
-        return jsonify(items)
+        # Fetch results
+        total = query.count()
+        items = (
+            query.order_by(Item.id.desc()) # newest first
+            .offset((page - 1) * limit) # ignore items from previous pages
+            .limit(limit) # set limit for page
+            .all()
+        )
+        pages = max(ceil(total / limit), 1)
+
+        return jsonify({
+        "items": [it.to_dict() for it in items],
+        "page": page,
+        "pages": pages,
+        "total": total,
+        "limit": limit,
+    })
 
     # Create item
     @app.post("/api/items")
     def create_item():
         """
-            Create a new item.
-            Requires JSON body: { "name": "example" }
-        """
+        Create an item.
+
+        Body:
+            { name: <string> }   # required, <= 120 chars
+
+        Response (201 Created):
+            { id, name, created_at }
+
+        Errors:
+            400: name missing or too long
+            409: duplicate name (case insensitive)
+    """
         data = request.get_json() or {}
         name = data.get("name", "").strip()
 
-        # Handle empty input
+        # --- Error Checks ---
+            # Input Empty
         if not name:
             return jsonify({"error": "name is required"}), 400
         
-        # Enforce uniqueness
-        if Item.query.filter_by(name=name).first():
+            # Input too long
+        if len(name) > 120:
+            return jsonify({"error": "name must be ≤ 120 chars"}), 400
+        
+            # Input not unique (case insensitive)
+        if Item.query.filter(func.lower(Item.name) == name.lower()).first():
             return jsonify({"error": "name already exists"}), 409
         
         # If no issues -> Create & save
         it = Item(name=name)
         db.session.add(it)
         db.session.commit()
-
         return jsonify(it.to_dict()), 201
 
     # Update item
     @app.put("/api/items/<int:item_id>")
     def update_item(item_id):
         """
-            Update an existing item's name by ID.
-            Requires JSON body: { "name": "new name" }
+        Update item name by ID.
+        Body: { "name": <string> }
+        Errors:
+          400: name missing
+          404: not found
+          409: duplicate name (case insensitive)
         """
         data = request.get_json() or {}
         name = (data.get("name") or "").strip()
 
-        # Handle empty input
+        # --- Error Checks
+            # Empty Input
         if not name:
             return jsonify({"error": "name is required"}), 400
+        
+        it = db.session.get(Item, item_id) # if !empty, fetch item by ID
 
-        it = Item.query.get(item_id)
-
-        # Handle not found
+            # Input not found
         if not it:
             return jsonify({"error": "not found"}), 404
 
-        # Prevent duplicates
-        if name != it.name and Item.query.filter_by(name=name).first():
+            # Input not unique (case-insensitive)
+        if (
+            name.lower() != it.name.lower() and
+            Item.query.filter(func.lower(Item.name) == name.lower()).first()
+        ):
             return jsonify({"error": "name already exists"}), 409
 
         # If no issues -> update & save
         it.name = name
         db.session.commit()
-
         return jsonify(it.to_dict())
 
     # Delete item
     @app.delete("/api/items/<int:item_id>")
     def delete_item(item_id):
         """
-        Delete an item by ID.
-        No Requirements    
+        Delete by ID.
+        Errors:
+          404: not found
+        Success:
+          204 No Content
         """
-        it = Item.query.get(item_id)
+        it = db.session.get(Item, item_id)
         if not it:
             return jsonify({"error": "not found"}), 404
         
@@ -122,8 +174,12 @@ def create_app():
         db.session.delete(it)
         db.session.commit()
 
-        return jsonify({"ok": True})
-    
+        # return jsonify({"ok": True}) - inferior return (not "REST-y")
+        # This version better because:
+            # 204 means “The request succeeded, but there’s nothing to return.”, 200 means “The request succeeded, and here’s a response body.”
+            # Delete doesn't need to return data, just success report
+            # 204 is "REST-y" (official HTTP semantics for successful DELETE)
+        return ("", 204) 
     return app
 
 # ---------------------- ENTRY POINT ---------------------- #
