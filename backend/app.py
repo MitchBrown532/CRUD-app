@@ -138,7 +138,7 @@ def create_app(test_config: Optional[dict] = None):
         if not name:
             return jsonify({"error": "name is required"}), 400
         
-        it = Item.query.get(item_id) # if !empty, fetch item by ID
+        it = db.session.get(Item, item_id) # if !empty, fetch item by ID
 
             # Input not found
         if not it:
@@ -166,7 +166,7 @@ def create_app(test_config: Optional[dict] = None):
         Success:
           204 No Content
         """
-        it = Item.query.get(item_id)
+        it = db.session.get(Item, item_id)
         if not it:
             return jsonify({"error": "not found"}), 404
         
