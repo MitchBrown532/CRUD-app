@@ -3,8 +3,9 @@ import { api } from "../api";
 
 export default function Items() {
   // ------------- States -------------
-  // API results, loading state, and errors
+  // Items (API results), Items' meta, loading state, and errors
   const [items, setItems] = useState([]);
+  const [meta, setMeta] = useState({ page: 1, pages: 1, total: 0, limit: 10 });
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
 
@@ -37,7 +38,7 @@ export default function Items() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery]);
+  }, [debouncedQuery, meta.page]);
 
   // Focus input for editing
   // Ref allows to enter & esc to be used
@@ -47,13 +48,22 @@ export default function Items() {
 
   // ------------- Methods -------------
   // --- Fetch ---
-  async function loadItems(q) {
+  async function loadItems(q, page = meta.page, limit = meta.limit) {
     setLoading(true);
     setErr("");
     try {
-      const qs = q ? `?q=${encodeURIComponent(q)}` : "";
+      const qs = `?q=${encodeURIComponent(
+        q || ""
+      )}&page=${page}&limit=${limit}`; // limit & page required even if list empty
+
       const data = await api(`/api/items${qs}`);
-      setItems(data);
+      setItems(data.items);
+      setMeta({
+        page: data.page,
+        pages: data.pages,
+        total: data.total,
+        limit: data.limit,
+      });
     } catch (e) {
       setErr(e.message || "Failed to load items");
     } finally {
@@ -77,7 +87,7 @@ export default function Items() {
       addInputRef.current?.focus(); // refocus for fast entry
       await loadItems(); // reload list after update
     } catch (e) {
-      setErr(e.message);
+      setErr(e.message || "Failed to add item");
     } finally {
       setAdding(false);
     }
@@ -107,13 +117,13 @@ export default function Items() {
       setItems((prev) => prev.map((x) => (x.id === id ? updated : x)));
       cancelEdit();
     } catch (e) {
-      setErr(e.message);
+      setErr(e.message || "Failed to update item");
     } finally {
       setSavingId(false);
     }
   }
 
-  // --- Edit ---
+  // --- Delete ---
   function askDelete(id) {
     setConfirmId(id);
     setEditingId(null);
@@ -122,17 +132,51 @@ export default function Items() {
     setConfirmId(null);
   }
   async function doDelete(id) {
+    if (deletingId) return; // prevent double clicks
     setDeletingId(id);
     setErr("");
+    setConfirmId(null); // close confirm immediately for snappy feel
+
+    // --- Optimistic Update ---
+    // Snapshot for rollback
+    const prevItems = items;
+    const prevMeta = meta;
+
+    // Store new values (compute only once + reusability/readability)
+    // Updating before API results
+    setItems((prev) => prev.filter((x) => x.id !== id));
+    setMeta((m) => ({ ...m, total: Math.max(0, m.total - 1) }));
+
     try {
-      await api(`/api/items/${id}`, { method: "DELETE" });
-      setItems((prev) => prev.filter((x) => x.id !== id));
-      setConfirmId(null);
+      await api(`/api/items/${id}`, { method: "DELETE" }); // api() throws on error (no need for if(!res = ok))
+      // If no items in list, fetch next page.
+      if (items.length === 1) {
+        await loadItems();
+      }
     } catch (e) {
-      setErr(e.message);
+      setErr(e.message || "Failed to delete item");
+      setItems(prevItems); // rollback if failed
+      setMeta(prevMeta);
+      setConfirmId(id); // re-enable confirm if failed
     } finally {
       setDeletingId(null);
     }
+  }
+  // --- Navigation ---
+  async function goPrev() {
+    console.log("Prev test 1: ", meta.page);
+
+    if (meta.page <= 1) return;
+    await loadItems(query || "", meta.page - 1, meta.limit);
+    console.log("prev test 2: ", meta.page);
+  }
+
+  async function goNext() {
+    console.log("next test 1: ", meta.page);
+
+    if (meta.page >= meta.pages) return;
+    await loadItems(query || "", meta.page + 1, meta.limit);
+    console.log("next test 2: ", meta.page);
   }
 
   // If no error - show list. If empty, display message.
@@ -255,6 +299,17 @@ export default function Items() {
           </li>
         ))}
       </ul>
+      <p style={{ opacity: 0.7, marginTop: 4 }}>
+        Showing {items.length} of {meta.total} (Page {meta.page} / {meta.pages})
+      </p>
+      <div style={{ display: "flex", gap: 8, margin: "8px 0" }}>
+        <button onClick={() => goPrev()} disabled={meta.page <= 1}>
+          Prev
+        </button>
+        <button onClick={() => goNext()} disabled={meta.page >= meta.pages}>
+          Next
+        </button>
+      </div>
     </div>
   );
 }

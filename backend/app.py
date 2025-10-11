@@ -65,14 +65,15 @@ def create_app(test_config: Optional[dict] = None):
         
         # Fetch results
         total = query.count()
+        pages = max(ceil(total / limit), 1)
+
         items = (
             query.order_by(Item.id.desc()) # newest first
             .offset((page - 1) * limit) # ignore items from previous pages
             .limit(limit) # set limit for page
             .all()
         )
-        pages = max(ceil(total / limit), 1)
-
+        
         return jsonify({
         "items": [it.to_dict() for it in items],
         "page": page,

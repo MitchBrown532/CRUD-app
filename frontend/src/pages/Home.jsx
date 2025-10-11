@@ -1,21 +1,26 @@
 import { useEffect, useState } from "react";
+import { api } from "../api";
 
 export default function Home() {
   // Local state to track the backend's status
-  const [api, setApi] = useState("Checking...");
+  const [apiStatus, setApiStatus] = useState("Checking...");
 
   useEffect(() => {
-    fetch(`${import.meta.env.VITE_API_URL}/api/health`)
-      .then((res) => res.json()) // Parse JSON from response
-      .then((data) => setApi(data.status ?? "unknown")) // Update UI with backend status
-      .catch(() => setApi("error")); // If fetch fails, show error
-  }, []); // '[]' means run only once (when the component renders).
+    (async () => {
+      try {
+        const data = await api("/api/health");
+        setApiStatus(data?.status ?? "unknown");
+      } catch {
+        setApiStatus("error");
+      }
+    })();
+  }, []);
 
   return (
     <div style={{ padding: 16 }}>
       <h1>Home</h1>
       <p>
-        Backend Status: <strong>{api}</strong>
+        Backend Status: <strong>{apiStatus}</strong>
       </p>
     </div>
   );

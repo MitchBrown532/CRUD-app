@@ -9,16 +9,18 @@ export async function api(path, opts = {}) {
     ...opts, // allow method/body/etc. via opts
   });
 
-  let data = null;
-  try {
-    data = await res.json(); // try to parse JSON
-  } catch (_) {} // ignore parse errors; we'll handle via status
+  // Parse JSON (null if failed)
+  const data = await res.json().catch(() => null);
 
+  // Error check
   if (!res.ok) {
     // on HTTP error, surface a readable message
-    const msg = (data && (data.error || data.message)) || `HTTP ${res.status}`;
-    throw new Error(msg);
+    const msg = data?.error || data?.message || res.statusText;
+    const err = new Error(msg);
+    err.status = res.status;
+    err.details = data;
+    throw err;
   }
 
-  return data ?? null; // return parsed JSON or null (for empty)
+  return data;
 }
