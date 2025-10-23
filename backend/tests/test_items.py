@@ -67,7 +67,7 @@ def test_list_respects_limit_and_pagination(client):
     assert r2.status_code == 200
     assert d2["page"] == 2
     assert len(d2["items"]) == 5
-    # Ensure non-overlap between page 1 and 2
+    # Ensure no overlap between page 1 and 2
     ids1 = {it["id"] for it in d1["items"]}
     ids2 = {it["id"] for it in d2["items"]}
     assert ids1.isdisjoint(ids2)
@@ -78,6 +78,20 @@ def test_search_filter_case_insensitive(client):
     assert r.status_code == 200
     names = [it["name"].lower() for it in data["items"]]
     assert any("alpha" in n for n in names)
+
+def test_sort_by_name_asc(client):
+    r = client.get("/api/items?sort=name&order=asc&limit=5")
+    data = r.get_json()
+    names = [it["name"] for it in data["items"]]
+    assert names == sorted(names)
+
+def test_sort_by_created_at_desc(client):
+    r = client.get("/api/items?sort=created_at&order=desc&limit=5")
+    data = r.get_json()
+    # ensure chronological order (newest first)
+    times = [it["created_at"] for it in data["items"]]
+    assert times == sorted(times, reverse=True)
+
 print("--------------------- List Test ---------------------")
 
 # --------------------- Create ---------------------

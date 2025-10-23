@@ -24,6 +24,10 @@ export default function Items() {
   const [query, setQuery] = useState("");
   const debouncedQuery = useDebounce(query, 300); // delay before re-rendering (rather than immediately after each keystroke)
 
+  // Sorting
+  const [sort, setSort] = useState("id"); // id | name | created_at
+  const [order, setOrder] = useState("desc"); // asc | desc
+
   // Delete + Confirm
   const [confirmId, setConfirmId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
@@ -38,7 +42,7 @@ export default function Items() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, meta.page]);
+  }, [debouncedQuery, meta.page, sort, order]);
 
   // Focus input for editing
   // Ref allows to enter & esc to be used
@@ -52,9 +56,11 @@ export default function Items() {
     setLoading(true);
     setErr("");
     try {
-      const qs = `?q=${encodeURIComponent(
-        q || ""
-      )}&page=${page}&limit=${limit}`; // limit & page required even if list empty
+      const qs =
+        `?q=${encodeURIComponent(q || "")}` +
+        `&page=${page}&limit=${limit}` +
+        `&sort=${encodeURIComponent(sort)}` +
+        `&order=${encodeURIComponent(order)}`;
 
       const data = await api(`/api/items${qs}`);
       setItems(data.items);
@@ -103,7 +109,7 @@ export default function Items() {
     setEditingId(null);
     setDraft("");
   }
-  async function saveEdit(it) {
+  async function saveEdit(id) {
     const name = draft.trim();
     const original = items.find((x) => x.id === id)?.name ?? "";
     if (!name || name === original) return;
@@ -111,7 +117,7 @@ export default function Items() {
     setErr("");
     try {
       const updated = await api(`/api/items/${id}`, {
-        method: "POST",
+        method: "PUT",
         body: JSON.stringify({ name }),
       });
       setItems((prev) => prev.map((x) => (x.id === id ? updated : x)));
@@ -184,7 +190,7 @@ export default function Items() {
     <div style={{ padding: 16 }}>
       <h1>Items</h1>
 
-      {/* centralized error banner */}
+      {/* Error banner */}
       {err && (
         <div
           style={{
@@ -198,6 +204,26 @@ export default function Items() {
           {err}
         </div>
       )}
+
+      {/* Sorting */}
+      <div style={{ marginBottom: 12 }}>
+        <label style={{ marginRight: 8 }}>
+          Sort:&nbsp;
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            style={{ marginRight: 8 }}
+          >
+            <option value="id">ID</option>
+            <option value="name">Name</option>
+            <option value="created_at">Created</option>
+          </select>
+        </label>
+        <select value={order} onChange={(e) => setOrder(e.target.value)}>
+          <option value="asc">Ascending</option>
+          <option value="desc">Descending</option>
+        </select>
+      </div>
 
       {/* Search */}
       <div style={{ marginBottom: 12 }}>
@@ -299,6 +325,8 @@ export default function Items() {
           </li>
         ))}
       </ul>
+
+      {/* Next/Prev + pagination info */}
       <p style={{ opacity: 0.7, marginTop: 4 }}>
         Showing {items.length} of {meta.total} (Page {meta.page} / {meta.pages})
       </p>

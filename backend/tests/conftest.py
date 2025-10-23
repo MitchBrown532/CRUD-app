@@ -20,7 +20,7 @@ def seed_items(n=23):
 def app():
     """
     Creates a temporary Flask app instance using an in-memory SQLite database.
-    This isolates tests from the real app.db.
+    This isolates tests from each other and from the real app.db.
     """
     app = create_app({
         "TESTING": True, # enables Flask test mode (no error catching)

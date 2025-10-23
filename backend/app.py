@@ -67,11 +67,24 @@ def create_app(test_config: Optional[dict] = None):
         total = query.count()
         pages = max(ceil(total / limit), 1)
 
+        # Sorting options
+        sort = request.args.get("sort", "id").lower()
+        order = request.args.get("order", "desc").lower()
+
+        # Whitelist valid columns to prevent SQL injection
+        valid_sorts = {"id": Item.id, "name": Item.name, "created_at": Item.created_at}
+        sort_col = valid_sorts.get(sort, Item.id)
+
+        # Apply order direction
+        if order == "asc":
+            query = query.order_by(sort_col.asc())
+        else:
+            query = query.order_by(sort_col.desc())
+
         items = (
-            query.order_by(Item.id.desc()) # newest first
-            .offset((page - 1) * limit) # ignore items from previous pages
-            .limit(limit) # set limit for page
-            .all()
+            query.offset((page - 1) * limit)
+                .limit(limit)
+                .all()
         )
         
         return jsonify({
