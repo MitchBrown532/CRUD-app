@@ -25,7 +25,7 @@ Implements Create, Read, Update, and Delete (CRUD) functionality with a database
 - [✅] Create/Read/Update/Delete items
 - [✅] Filterable/Sortable/Paginated list
 - [✅] Pytest coverage for backend
-- [✅]
+- [] Frontend smoke tests (not yet)
 - [✅] Github workflow included
 - [] Authentication (stretch goal)
 
@@ -33,7 +33,7 @@ Implements Create, Read, Update, and Delete (CRUD) functionality with a database
 
 ## 🛠️ Installation & Setup
 
-For Installation:
+### Installation:
 
 1. Clone the repo:
    ```bash
@@ -52,7 +52,9 @@ For Installation:
    pip install -r requirements.txt
    ```
 
-For Concurrent Start-Up:
+### Start-Up
+
+#### Concurrent Start-Up:
 
 1. Run the start command:
    ```bash
@@ -61,7 +63,7 @@ For Concurrent Start-Up:
 
 - This command will concurrently run frontend & backend (including intializing the venv for backend). All data from frontend and backend will be color coded and shown in a shared console for ease of life.
 
-For Front-end Start-up:
+#### Front-end Start-up:
 
 1. Navigate to frontend
    ```bash
@@ -72,7 +74,7 @@ For Front-end Start-up:
    npm start
    ```
 
-For Back-end Start-up:
+#### Back-end Start-up:
 
 1. Navigate to frontend
    ```bash
@@ -92,8 +94,8 @@ For Back-end Start-up:
 ## 🔌 API
 
 - GET /api/items?q=&page=&limit=&sort=id|name|created_at&order=asc|desc
-- POST /api/items { name }
-- PUT /api/items/:id { name }
+- POST /api/items
+- PUT /api/items/:id
 - DELETE /api/items/:id
 
 ---
@@ -114,6 +116,21 @@ For backend tests:
 - This will run all backend tests and return a verbose report for each test.
 
 For frontend tests: (not yet created)
+
+---
+
+## ⚙️ Tech Decisions
+
+- **Flask Factory Pattern**: The API is created via `create_app()` for clean test isolation, environment-specific config, and easy growth into Blueprints.
+- **SQLAlchemy Models + `to_dict()`**: Models control their own JSON shape (stable API contract, easy evolution).
+- **Search + Debounce (300ms)**: Reduces pointless network traffic while keeping the UI responsive during typing.
+- **URL-Synced State (`q`, `page`, `sort`, `order`)**: Shareable links and refresh-safe views via `useSearchParams`.
+- **Sorting Whitelist**: Only known columns (`id`, `name`, `created_at`) are accepted server-side to avoid invalid input/SQL injection vectors.
+- **Optimistic Delete**: Instant UI feedback with rollback on failure for a snappy feel.
+- **REST Semantics**: `201` on create, `204` on delete, and descriptive 4xx messages for predictable client behavior.
+- **Testing Strategy**:
+  - **Backend**: Pytest covers CRUD, pagination/search, and sorting.
+  - **Frontend**: Lightweight Vitest + React Testing Library smoke tests (list renders, errors render) to guard core flows.
 
 ---
 
