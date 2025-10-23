@@ -1,21 +1,28 @@
-import { useEffect, useState, useRef } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useRef, useState } from "react";
+import { useListParams } from "../hooks/useListParams";
+import { useDebounce } from "../hooks/useDebounce";
+import { useItemsData } from "../hooks/useItemsData";
+import ItemRow from "../components/ItemRow";
 import { api } from "../api";
 
 export default function Items() {
-  // For persistent search & sort (maintains upon refresh)
-  const [searchParams, setSearchParams] = useSearchParams();
-  const initialQ = searchParams.get("q") || "";
-  const initialPage = Number(searchParams.get("page") || 1);
-  const initialSort = searchParams.get("sort") || "id"; // id | name | created_at
-  const initialOrder = searchParams.get("order") || "desc"; // asc | desc
+  // ------------- Hooks -------------
+
+  // List params (for pushing to URL to have persistent search/sort)
+  const { query, setQuery, page, setPage, sort, setSort, order, setOrder } =
+    useListParams();
+  const debouncedQuery = useDebounce(query, 300);
+
+  // Item Data (fetch + meta + errors)
+  const { items, setItems, meta, setMeta, loading, err, setErr, reload } =
+    useItemsData({
+      query: debouncedQuery,
+      sort,
+      order,
+      page,
+    });
 
   // ------------- States -------------
-  // Items (API results), Items' meta, loading state, and errors
-  const [items, setItems] = useState([]);
-  const [meta, setMeta] = useState({ page: 1, pages: 1, total: 0, limit: 10 });
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
 
   // Add
   const [newName, setNewName] = useState("");
@@ -28,76 +35,11 @@ export default function Items() {
   const [savingId, setSavingId] = useState(null);
   const editRef = useRef(null); // auto-focus input when edit starts
 
-  // Search
-  const [query, setQuery] = useState(initialQ);
-  const debouncedQuery = useDebounce(query, 300); // delay before re-rendering (rather than immediately after each keystroke)
-
-  // Sorting
-  const [sort, setSort] = useState(initialSort); // id | name | created_at
-  const [order, setOrder] = useState(initialOrder); // asc | desc
-  const [page, setPage] = useState(initialPage);
-
   // Delete + Confirm
   const [confirmId, setConfirmId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
-  // ------------- Effects -------------
-  // Ensure persistence
-  useEffect(() => {
-    const params = new URLSearchParams(searchParams);
-    params.set("q", query);
-    params.set("page", String(page));
-    params.set("sort", sort);
-    params.set("order", order);
-    setSearchParams(params, { replace: true });
-  }, [query, page, sort, order]);
-
-  // Fetch List
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      if (!cancelled) await loadItems(debouncedQuery);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [debouncedQuery, page, sort, order]);
-
-  // Focus input for editing
-  // Ref allows to enter & esc to be used
-  useEffect(() => {
-    if (editingId !== null) editRef.current?.focus();
-  }, [editingId]);
-
   // ------------- Methods -------------
-  // --- Fetch ---
-  async function loadItems(q, p = page, limit = meta.limit) {
-    setLoading(true);
-    setErr("");
-    try {
-      const qs =
-        `?q=${encodeURIComponent(q || "")}` +
-        `&page=${p}&limit=${limit}` +
-        `&sort=${encodeURIComponent(sort)}` +
-        `&order=${encodeURIComponent(order)}`;
-
-      const data = await api(`/api/items${qs}`);
-      setItems(data.items);
-      setMeta({
-        page: data.page,
-        pages: data.pages,
-        total: data.total,
-        limit: data.limit,
-      });
-      // In case backend clamps page (e.g., ask for page 99 on small result set)
-      if (data.page !== p) setPage(data.page);
-    } catch (e) {
-      setErr(e.message || "Failed to load items");
-    } finally {
-      setLoading(false);
-    }
-  }
-
   // --- Add ---
   async function onAdd(e) {
     e.preventDefault();
@@ -112,7 +54,7 @@ export default function Items() {
       });
       setNewName(""); // clear field
       addInputRef.current?.focus(); // refocus for fast entry
-      await loadItems(); // reload list after update
+      await reload(); // reload list after update
     } catch (e) {
       setErr(e.message || "Failed to add item");
     } finally {
@@ -125,6 +67,7 @@ export default function Items() {
     setEditingId(it.id);
     setDraft(it.name);
     setConfirmId(null);
+    setTimeout(() => editRef.current?.focus(), 0);
   }
   function cancelEdit() {
     setEditingId(null);
@@ -176,9 +119,12 @@ export default function Items() {
 
     try {
       await api(`/api/items/${id}`, { method: "DELETE" }); // api() throws on error (no need for if(!res = ok))
-      // If no items in list, fetch next page.
-      if (items.length === 1) {
-        await loadItems();
+      // If empty & not page 1 - move back a page
+      if (prevItems.length === 1 && page > 1) {
+        setPage(page - 1); // triggers fetch via hook
+        // If empty & page 1 - refresh
+      } else if (prevItems.length === 1) {
+        await reload();
       }
     } catch (e) {
       setErr(e.message || "Failed to delete item");
@@ -190,7 +136,7 @@ export default function Items() {
     }
   }
 
-  // --- Navigation ---
+  // --- Pagination ---
   async function goPrev() {
     if (page <= 1) return;
     setPage((p) => p - 1);
@@ -240,7 +186,6 @@ export default function Items() {
           value={order}
           onChange={(e) => {
             setOrder(e.target.value);
-            setPage(1);
           }}
         >
           <option value="asc">Ascending</option>
@@ -290,89 +235,42 @@ export default function Items() {
         </div>
       )}
 
-      {/* If not empty - list. Each item has edit & delete in line */}
+      {/* List */}
       <ul style={{ marginTop: 8 }}>
         {items.map((it) => (
-          <li key={it.id} style={{ marginBottom: 8 }}>
-            {editingId === it.id ? (
-              <>
-                <input
-                  ref={editRef}
-                  value={draft}
-                  onChange={(e) => setDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") saveEdit(it.id);
-                    if (e.key === "Escape") cancelEdit();
-                  }}
-                  style={{ marginRight: 6, padding: 6 }}
-                  aria-label="Edit item name"
-                />
-                <button
-                  onClick={() => saveEdit(it.id)}
-                  disabled={
-                    savingId === it.id ||
-                    draft.trim() === "" ||
-                    draft.trim() === it.name
-                  }
-                  style={{ marginRight: 6 }}
-                >
-                  {savingId === it.id ? "Saving…" : "Save"}
-                </button>
-                <button onClick={cancelEdit}>Cancel</button>
-              </>
-            ) : (
-              <>
-                <span style={{ marginRight: 8 }}>{it.name}</span>
-
-                <button
-                  onClick={() => startEdit(it)}
-                  style={{ marginRight: 6 }}
-                >
-                  Edit
-                </button>
-
-                {confirmId === it.id ? (
-                  <>
-                    <button
-                      onClick={() => doDelete(it.id)}
-                      disabled={deletingId === it.id}
-                      style={{ marginRight: 6 }}
-                    >
-                      {deletingId === it.id ? "Deleting…" : "Confirm?"}
-                    </button>
-                    <button onClick={cancelDelete}>Cancel</button>
-                  </>
-                ) : (
-                  <button onClick={() => askDelete(it.id)}>Delete</button>
-                )}
-              </>
-            )}
-          </li>
+          <ItemRow
+            key={it.id}
+            it={it}
+            editingId={editingId}
+            draft={draft}
+            savingId={savingId}
+            confirmId={confirmId}
+            editRef={editRef}
+            onStartEdit={startEdit}
+            onDraft={setDraft}
+            onSave={saveEdit}
+            onCancelEdit={cancelEdit}
+            onAskDelete={askDelete}
+            onConfirmDelete={doDelete}
+            onCancelDelete={cancelDelete}
+          />
         ))}
       </ul>
 
-      {/* Next/Prev + pagination info */}
-      <p style={{ opacity: 0.7, marginTop: 4 }}>
-        Showing {items.length} of {meta.total} (Page {page} / {meta.pages})
-      </p>
-      <div style={{ display: "flex", gap: 8, margin: "8px 0" }}>
-        <button onClick={() => goPrev()} disabled={page <= 1}>
-          Prev
-        </button>
-        <button onClick={() => goNext()} disabled={page >= meta.pages}>
-          Next
-        </button>
+      {/* Pagination */}
+      <div>
+        <p style={{ opacity: 0.7, marginTop: 4 }}>
+          Showing {items.length} of {meta.total} (Page {page} / {meta.pages})
+        </p>
+        <div style={{ display: "flex", gap: 8, margin: "8px 0" }}>
+          <button onClick={() => goPrev()} disabled={page <= 1}>
+            Prev
+          </button>
+          <button onClick={() => goNext()} disabled={page >= meta.pages}>
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );
-}
-
-/* tiny debounce hook */
-function useDebounce(value, delay) {
-  const [debounced, setDebounced] = useState(value);
-  useEffect(() => {
-    const id = setTimeout(() => setDebounced(value), delay);
-    return () => clearTimeout(id);
-  }, [value, delay]);
-  return debounced;
 }
