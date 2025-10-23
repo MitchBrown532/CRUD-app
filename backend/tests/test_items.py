@@ -92,6 +92,15 @@ def test_sort_by_created_at_desc(client):
     times = [it["created_at"] for it in data["items"]]
     assert times == sorted(times, reverse=True)
 
+def test_sort_name_case_insensitive(client):
+    # Insert names with mixed case
+    client.post("/api/items", json={"name": "apple"})
+    client.post("/api/items", json={"name": "Banana"})
+    client.post("/api/items", json={"name": "cherry"})
+    r = client.get("/api/items?sort=name&order=asc")
+    names = [it["name"] for it in r.get_json()["items"]]
+    assert names == sorted(names, key=lambda n: n.lower())
+
 print("--------------------- List Test ---------------------")
 
 # --------------------- Create ---------------------

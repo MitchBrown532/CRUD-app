@@ -72,7 +72,10 @@ def create_app(test_config: Optional[dict] = None):
         order = request.args.get("order", "desc").lower()
 
         # Whitelist valid columns to prevent SQL injection
-        valid_sorts = {"id": Item.id, "name": Item.name, "created_at": Item.created_at}
+        valid_sorts = {"id": Item.id, 
+                       "name": func.lower(Item.name), # ensures case-insensitive search
+                       "created_at": Item.created_at
+                    }
         sort_col = valid_sorts.get(sort, Item.id)
 
         # Apply order direction

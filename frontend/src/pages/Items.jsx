@@ -1,7 +1,15 @@
 import { useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api } from "../api";
 
 export default function Items() {
+  // For persistent search & sort (maintains upon refresh)
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQ = searchParams.get("q") || "";
+  const initialPage = Number(searchParams.get("page") || 1);
+  const initialSort = searchParams.get("sort") || "id"; // id | name | created_at
+  const initialOrder = searchParams.get("order") || "desc"; // asc | desc
+
   // ------------- States -------------
   // Items (API results), Items' meta, loading state, and errors
   const [items, setItems] = useState([]);
@@ -21,18 +29,29 @@ export default function Items() {
   const editRef = useRef(null); // auto-focus input when edit starts
 
   // Search
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQ);
   const debouncedQuery = useDebounce(query, 300); // delay before re-rendering (rather than immediately after each keystroke)
 
   // Sorting
-  const [sort, setSort] = useState("id"); // id | name | created_at
-  const [order, setOrder] = useState("desc"); // asc | desc
+  const [sort, setSort] = useState(initialSort); // id | name | created_at
+  const [order, setOrder] = useState(initialOrder); // asc | desc
+  const [page, setPage] = useState(initialPage);
 
   // Delete + Confirm
   const [confirmId, setConfirmId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
 
   // ------------- Effects -------------
+  // Ensure persistence
+  useEffect(() => {
+    const params = new URLSearchParams(searchParams);
+    params.set("q", query);
+    params.set("page", String(page));
+    params.set("sort", sort);
+    params.set("order", order);
+    setSearchParams(params, { replace: true });
+  }, [query, page, sort, order]);
+
   // Fetch List
   useEffect(() => {
     let cancelled = false;
@@ -42,7 +61,7 @@ export default function Items() {
     return () => {
       cancelled = true;
     };
-  }, [debouncedQuery, meta.page, sort, order]);
+  }, [debouncedQuery, page, sort, order]);
 
   // Focus input for editing
   // Ref allows to enter & esc to be used
@@ -52,13 +71,13 @@ export default function Items() {
 
   // ------------- Methods -------------
   // --- Fetch ---
-  async function loadItems(q, page = meta.page, limit = meta.limit) {
+  async function loadItems(q, p = page, limit = meta.limit) {
     setLoading(true);
     setErr("");
     try {
       const qs =
         `?q=${encodeURIComponent(q || "")}` +
-        `&page=${page}&limit=${limit}` +
+        `&page=${p}&limit=${limit}` +
         `&sort=${encodeURIComponent(sort)}` +
         `&order=${encodeURIComponent(order)}`;
 
@@ -70,6 +89,8 @@ export default function Items() {
         total: data.total,
         limit: data.limit,
       });
+      // In case backend clamps page (e.g., ask for page 99 on small result set)
+      if (data.page !== p) setPage(data.page);
     } catch (e) {
       setErr(e.message || "Failed to load items");
     } finally {
@@ -168,21 +189,15 @@ export default function Items() {
       setDeletingId(null);
     }
   }
+
   // --- Navigation ---
   async function goPrev() {
-    console.log("Prev test 1: ", meta.page);
-
-    if (meta.page <= 1) return;
-    await loadItems(query || "", meta.page - 1, meta.limit);
-    console.log("prev test 2: ", meta.page);
+    if (page <= 1) return;
+    setPage((p) => p - 1);
   }
-
   async function goNext() {
-    console.log("next test 1: ", meta.page);
-
-    if (meta.page >= meta.pages) return;
-    await loadItems(query || "", meta.page + 1, meta.limit);
-    console.log("next test 2: ", meta.page);
+    if (page >= meta.pages) return;
+    setPage((p) => p + 1);
   }
 
   // If no error - show list. If empty, display message.
@@ -211,7 +226,9 @@ export default function Items() {
           Sort:&nbsp;
           <select
             value={sort}
-            onChange={(e) => setSort(e.target.value)}
+            onChange={(e) => {
+              setSort(e.target.value);
+            }}
             style={{ marginRight: 8 }}
           >
             <option value="id">ID</option>
@@ -219,7 +236,13 @@ export default function Items() {
             <option value="created_at">Created</option>
           </select>
         </label>
-        <select value={order} onChange={(e) => setOrder(e.target.value)}>
+        <select
+          value={order}
+          onChange={(e) => {
+            setOrder(e.target.value);
+            setPage(1);
+          }}
+        >
           <option value="asc">Ascending</option>
           <option value="desc">Descending</option>
         </select>
@@ -229,7 +252,9 @@ export default function Items() {
       <div style={{ marginBottom: 12 }}>
         <input
           value={query}
-          onChange={(e) => setQuery(e.target.value)}
+          onChange={(e) => {
+            setQuery(e.target.value);
+          }}
           placeholder="Search items…"
           style={{ padding: 8, width: 260, marginRight: 8 }}
           aria-label="Search items"
@@ -328,13 +353,13 @@ export default function Items() {
 
       {/* Next/Prev + pagination info */}
       <p style={{ opacity: 0.7, marginTop: 4 }}>
-        Showing {items.length} of {meta.total} (Page {meta.page} / {meta.pages})
+        Showing {items.length} of {meta.total} (Page {page} / {meta.pages})
       </p>
       <div style={{ display: "flex", gap: 8, margin: "8px 0" }}>
-        <button onClick={() => goPrev()} disabled={meta.page <= 1}>
+        <button onClick={() => goPrev()} disabled={page <= 1}>
           Prev
         </button>
-        <button onClick={() => goNext()} disabled={meta.page >= meta.pages}>
+        <button onClick={() => goNext()} disabled={page >= meta.pages}>
           Next
         </button>
       </div>
