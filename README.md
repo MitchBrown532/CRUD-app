@@ -18,15 +18,15 @@ Implements Create, Read, Update, and Delete (CRUD) functionality with a database
 
 ## 📂 Features (Work in Progress)
 
-- [✅] React frontend with navigation (Home, Items, Add Item)
-- [✅] Backend API built with Flask
-- [✅] Database schema for storing items
-- [✅] Create new items
-- [✅] Read and display items
-- [✅] Update existing items
-- [✅] Delete items
-- [✅] Search items
-- [✅] Paginated lists
+- [✅] React frontend
+- [✅] React Router for navigation
+- [✅] Backend API (Flask + SQLAlchemy)
+- [✅] Database for persistent storage
+- [✅] Create/Read/Update/Delete items
+- [✅] Filterable/Sortable/Paginated list
+- [✅] Pytest coverage for backend
+- [✅]
+- [✅] Github workflow included
 - [] Authentication (stretch goal)
 
 ---
@@ -86,6 +86,34 @@ For Back-end Start-up:
    ```bash
    python app.py
    ```
+
+---
+
+## 🔌 API
+
+- GET /api/items?q=&page=&limit=&sort=id|name|created_at&order=asc|desc
+- POST /api/items { name }
+- PUT /api/items/:id { name }
+- DELETE /api/items/:id
+
+---
+
+## 🧪 Tests
+
+For backend tests:
+
+1. Navigate to backend
+   ```bash
+   cd backend
+   ```
+2. Run tests
+   ```bash
+   pytest -v
+   ```
+
+- This will run all backend tests and return a verbose report for each test.
+
+For frontend tests: (not yet created)
 
 ---
 
