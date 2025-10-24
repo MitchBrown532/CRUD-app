@@ -9,10 +9,10 @@ Implements Create, Read, Update, and Delete (CRUD) functionality with a database
 
 ## 🚀 Tech Stack
 
-- **Frontend:** React, JavaScript, TailwindCSS (optional for styling)
-- **Backend:** Flask (Python)
-- **Database:** SQLite
-- **Other Tools:** Git, REST API
+- **Frontend:** React (JS, JSX, HTML, CSS), TailwindCSS (styling not complete - may just use CSS), Vitest
+- **Backend:** Flask (Python), Pytest
+- **Database:** SQLAlchemy
+- **Other Tools:** Git (CI/CD)
 
 ---
 
@@ -21,11 +21,11 @@ Implements Create, Read, Update, and Delete (CRUD) functionality with a database
 - [✅] React frontend
 - [✅] React Router for navigation
 - [✅] Backend API (Flask + SQLAlchemy)
-- [✅] Database for persistent storage
+- [✅] SQL Database for persistent storage
 - [✅] Create/Read/Update/Delete items
-- [✅] Filterable/Sortable/Paginated list
-- [✅] Pytest coverage for backend
-- [] Frontend smoke tests (not yet)
+- [✅] Filterable/Sortable/Paginated lists
+- [✅] Pytest for backend tests
+- [✅] Vitest for frontend tests
 - [✅] Github workflow included
 - [] Authentication (stretch goal)
 

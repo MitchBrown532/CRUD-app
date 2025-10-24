@@ -3,6 +3,9 @@ on: [push, pull_request]
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
     steps:
       - uses: actions/checkout@v4 # Clones repo into CI runner - will use with every .yml
 
@@ -19,3 +22,21 @@ jobs:
 
       - name: Run backend tests
         run: pytest -q
+  frontend-tests:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - uses: actions/checkout@v4 # Clones repo into CI runner - will use with every .yml
+
+      - name: Set Up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      
+      - name: Install frontend deps
+        run: npm ci
+
+      - name: Run frontend tests:
+        run: npm run test:ci
