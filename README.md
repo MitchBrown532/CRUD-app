@@ -144,6 +144,6 @@ For frontend tests: (not yet created)
 
 ## 📜 License
 
-This project is for learning purposes only. Free to use and adapt.
+This project is for learning purposes only. Free to use and adapt it.
 
 ---
