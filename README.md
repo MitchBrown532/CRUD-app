@@ -137,8 +137,10 @@ For frontend tests: (not yet created)
 ## 📸 Screenshots (to add later)
 
 ![Screenshot of a functional CRUD app demonstrating all fundamentals of Full stack development](image.png)
-
-![Screenshot of extensive backend testing with every test being passed](image-1.png)
+![Screenshot of backend testing done in powershell with every test being passed](image-1.png)
+![Screenshot of frontend testing done in powershell with every test being passed](image-4.png)
+![Screenshot of CI testing for the backend done through GitHub Actions - 100% succeeded.](image-2.png)
+![Screenshot of CI testing for the frontend done through GitHub Actions - 100% succeeded.](image-3.png)
 
 ---
 
