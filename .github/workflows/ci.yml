@@ -34,9 +34,9 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
-      
+
       - name: Install frontend deps
         run: npm ci
 
-      - name: Run frontend tests:
+      - name: Run frontend tests
         run: npm run test:ci
