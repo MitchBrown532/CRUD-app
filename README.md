@@ -58,6 +58,7 @@ Implements Create, Read, Update, and Delete (CRUD) functionality with a database
 
 1. Run the start command:
    ```bash
+   cd frontend
    npm run start:all
    ```
 
