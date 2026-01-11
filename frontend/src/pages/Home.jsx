@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { api } from "../api";
+import { get } from "../api";
 
 export default function Home() {
-  // Local state to track the backend's status
   const [apiStatus, setApiStatus] = useState("Checking...");
 
+  // Health check
   useEffect(() => {
     (async () => {
       try {
-        const data = await api("/api/health");
+        const data = await get("/api/health");
         setApiStatus(data?.status ?? "unknown");
       } catch {
         setApiStatus("error");
@@ -16,12 +16,15 @@ export default function Home() {
     })();
   }, []);
 
+  const statusColor =
+    apiStatus === "error" ? "red" : apiStatus === "unknown" ? "gray" : "green";
+
   return (
-    <div style={{ padding: 16 }}>
+    <main style={{ padding: 16 }}>
       <h1>Home</h1>
       <p>
-        Backend Status: <strong>{apiStatus}</strong>
+        Backend Status: <strong style={{ color: statusColor }}>{apiStatus}</strong>
       </p>
-    </div>
+    </main>
   );
 }

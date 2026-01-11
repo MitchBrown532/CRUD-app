@@ -3,7 +3,7 @@ import { useListParams } from "../hooks/useListParams";
 import { useDebounce } from "../hooks/useDebounce";
 import { useItemsData } from "../hooks/useItemsData";
 import ItemRow from "../components/ItemRow";
-import { api } from "../api";
+import { get, post, put, del } from "../api";
 
 export default function Items() {
   // ------------- Hooks -------------
@@ -21,6 +21,9 @@ export default function Items() {
       order,
       page,
     });
+
+    //Success Message
+    const [successMsg, setSuccessMsg] = useState(""); // success feedback
 
   // ------------- States -------------
 
@@ -47,14 +50,19 @@ export default function Items() {
     if (!name) return;
     setAdding(true);
     setErr("");
+    setSuccessMsg("");
+
     try {
-      await api("/api/items", {
-        method: "POST",
-        body: JSON.stringify({ name }),
-      });
-      setNewName(""); // clear field
-      addInputRef.current?.focus(); // refocus for fast entry
-      await reload(); // reload list after update
+      await post("/api/items", { name });
+
+      //Clear input + refocus + reload
+      setNewName("");
+      addInputRef.current?.focus(); 
+      await reload(); 
+
+      // Show success message
+      setSuccessMsg(`"${name}" added successfully!`); 
+      setTimeout(() => setSuccessMsg(""), 3000); 
     } catch (e) {
       setErr(e.message || "Failed to add item");
     } finally {
@@ -80,10 +88,7 @@ export default function Items() {
     setSavingId(id);
     setErr("");
     try {
-      const updated = await api(`/api/items/${id}`, {
-        method: "PUT",
-        body: JSON.stringify({ name }),
-      });
+      const updated = await put(`/api/items/${id}`, { name });
       setItems((prev) => prev.map((x) => (x.id === id ? updated : x)));
       cancelEdit();
     } catch (e) {
@@ -116,21 +121,27 @@ export default function Items() {
     // Updating before API results
     setItems((prev) => prev.filter((x) => x.id !== id));
     setMeta((m) => ({ ...m, total: Math.max(0, m.total - 1) }));
+    setSuccessMsg("");
 
     try {
-      await api(`/api/items/${id}`, { method: "DELETE" }); // api() throws on error (no need for if(!res = ok))
+      await del(`/api/items/${id}`);
       // If empty & not page 1 - move back a page
       if (prevItems.length === 1 && page > 1) {
-        setPage(page - 1); // triggers fetch via hook
-        // If empty & page 1 - refresh
+        setPage(page - 1);
+      
+      // If empty & page 1 - refresh
       } else if (prevItems.length === 1) {
         await reload();
       }
+
+      // Show success message
+      setSuccessMsg(`Item deleted successfully!`);
+      setTimeout(() => setSuccessMsg(""), 3000);
     } catch (e) {
       setErr(e.message || "Failed to delete item");
       setItems(prevItems); // rollback if failed
       setMeta(prevMeta);
-      setConfirmId(id); // re-enable confirm if failed
+      setConfirmId(id); // re-enable CONFIRM button
     } finally {
       setDeletingId(null);
     }
@@ -148,12 +159,13 @@ export default function Items() {
 
   // If no error - show list. If empty, display message.
   return (
-    <div style={{ padding: 16 }}>
+    <main style={{ padding: 16 }}>
       <h1>Items</h1>
 
       {/* Error banner */}
       {err && (
-        <div
+        <div 
+          role="alert"
           style={{
             margin: "8px 0 16px",
             padding: 8,
@@ -222,6 +234,20 @@ export default function Items() {
         </button>
       </form>
 
+      {/* Success message */}
+      {successMsg && (
+        <div
+          role="status"
+          style={{
+            margin: "8px 0",
+            padding: 8,
+            color: "#007000",
+          }}
+        >
+          {successMsg}
+        </div>
+      )}
+
       {/* Empty states */}
       {!loading && items.length === 0 && (
         <div style={{ color: "#555", marginTop: 8 }}>
@@ -258,11 +284,11 @@ export default function Items() {
       </ul>
 
       {/* Pagination */}
-      <div>
-        <p style={{ opacity: 0.7, marginTop: 4 }}>
+      <div style={{marginTop: 8}}>
+        <p style={{ opacity: 0.7 }}>
           Showing {items.length} of {meta.total} (Page {page} / {meta.pages})
         </p>
-        <div style={{ display: "flex", gap: 8, margin: "8px 0" }}>
+        <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => goPrev()} disabled={page <= 1}>
             Prev
           </button>
@@ -271,6 +297,6 @@ export default function Items() {
           </button>
         </div>
       </div>
-    </div>
+    </main>
   );
 }

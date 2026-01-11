@@ -3,16 +3,15 @@
 ## 📌 Project Description
 
 Practice project to learn full-stack development with React and Flask.  
-Implements Create, Read, Update, and Delete (CRUD) functionality with a database backend.
+Implements full Create, Read, Update, and Delete (CRUD) functionality with a SQL database backend.
 
 ---
 
 ## 🚀 Tech Stack
 
 - **Frontend:** React (JS, JSX, HTML, CSS), TailwindCSS (styling not complete - may just use CSS), Vitest
-- **Backend:** Flask (Python), Pytest
-- **Database:** SQLAlchemy
-- **Other Tools:** Git (CI/CD)
+- **Backend:** Flask (Python), SQLAlchemy, Pytest
+- **Other Tools:** Git, Github Actions (CI/CD)
 
 ---
 
@@ -21,9 +20,9 @@ Implements Create, Read, Update, and Delete (CRUD) functionality with a database
 - [✅] React frontend
 - [✅] React Router for navigation
 - [✅] Backend API (Flask + SQLAlchemy)
-- [✅] SQL Database for persistent storage
-- [✅] Create/Read/Update/Delete items
-- [✅] Filterable/Sortable/Paginated lists
+- [✅] Persistent SQL database 
+- [✅] CRUD operations: Create, Read, Update, Delete 
+- [✅] Filterable, sortable, and paginated lists
 - [✅] Pytest for backend tests
 - [✅] Vitest for frontend tests
 - [✅] Github workflow included
@@ -48,9 +47,20 @@ Implements Create, Read, Update, and Delete (CRUD) functionality with a database
 3. Setup backend:
 
    ```bash
-   cd backend
+   cd ../backend
    pip install -r requirements.txt
    ```
+4. Create ENV
+
+   ```bash
+   cd ../frontend
+   touch .env
+   ```
+   - Add the following line to `.env `:
+   ```bash
+   VITE_API_URL= http://127.0.0.1:5001
+   ```
+   (Replace with your own back end port if different.)
 
 ### Start-Up
 
@@ -66,33 +76,23 @@ Implements Create, Read, Update, and Delete (CRUD) functionality with a database
 
 #### Front-end Start-up:
 
-1. Navigate to frontend
+1. Run start-up command:
    ```bash
    cd frontend
-   ```
-2. Run start-up command:
-   ```bash
-   npm start
+   npm run start:frontend
    ```
 
 #### Back-end Start-up:
 
-1. Navigate to frontend
+1. Run start-up command:
    ```bash
    cd frontend
-   ```
-2. Start up Virtual Environment (if not already done)
-   ```bash
-   ./venv/Scripts/Activate
-   ```
-3. Run start-up command:
-   ```bash
-   python app.py
+   npm run start:backend
    ```
 
 ---
 
-## 🔌 API
+## 🔌 API Endpoints
 
 - GET /api/items?q=&page=&limit=&sort=id|name|created_at&order=asc|desc
 - POST /api/items
@@ -122,16 +122,16 @@ For frontend tests: (not yet created)
 
 ## ⚙️ Tech Decisions
 
-- **Flask Factory Pattern**: The API is created via `create_app()` for clean test isolation, environment-specific config, and easy growth into Blueprints.
-- **SQLAlchemy Models + `to_dict()`**: Models control their own JSON shape (stable API contract, easy evolution).
+- **Flask Factory Pattern**: The API is created via `create_app()` for clean test isolation and environment configs.
+- **SQLAlchemy Models + `to_dict()`**: Models control JSON structure for predictable API.
 - **Search + Debounce (300ms)**: Reduces pointless network traffic while keeping the UI responsive during typing.
-- **URL-Synced State (`q`, `page`, `sort`, `order`)**: Shareable links and refresh-safe views via `useSearchParams`.
+- **URL-Synced State (`q`, `page`, `sort`, `order`)**: Shareable, refresh-safe views
 - **Sorting Whitelist**: Only known columns (`id`, `name`, `created_at`) are accepted server-side to avoid invalid input/SQL injection vectors.
 - **Optimistic Delete**: Instant UI feedback with rollback on failure for a snappy feel.
-- **REST Semantics**: `201` on create, `204` on delete, and descriptive 4xx messages for predictable client behavior.
+- **REST Semantics**: `201` for create, `204` for delete, descriptive `4xx` errors
 - **Testing Strategy**:
   - **Backend**: Pytest covers CRUD, pagination/search, and sorting.
-  - **Frontend**: Lightweight Vitest + React Testing Library smoke tests (list renders, errors render) to guard core flows.
+  - **Frontend**: Lightweight Vitest + React Testing Library smoke tests (list renders, errors render, etc.).
 
 ---
 
@@ -150,3 +150,10 @@ For frontend tests: (not yet created)
 This project is for learning purposes only. Free to use and adapt it.
 
 ---
+
+## 📝 Project Status
+
+- [✅] Core CRUD features complete
+- [✅] Filtering, sorting, pagination complete
+- [⬜] Add styling
+- [⬜] Auth and advanced features stretch goals
