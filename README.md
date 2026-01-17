@@ -155,7 +155,7 @@ For frontend tests:
 ![Cannot Go next if last page](./screenshots/pagination.png)
 !["Confirm" before deletion](./screenshots/delete_confirm.png)
 ![Cannot save if name exists](./screenshots/unique.png)
-![Screenshot of CI testing done through GitHub Actions - 100% succeeded.](CI/CD.png)
+![Screenshot of CI testing done through GitHub Actions - 100% succeeded.](CI.png)
 
 ---
 
