@@ -1,34 +1,94 @@
+// src/__tests__/Items.test.jsx
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, fireEvent, waitFor, within, cleanup } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 
-// IMPORTANT: Must mock BEFORE importing API - otherwise the real module is used!
+// --------- MOCK API ---------
 vi.mock("../api", () => ({
   api: vi.fn(),
+  get: vi.fn(),
+  post: vi.fn(),
+  put: vi.fn(),
+  del: vi.fn(),
 }));
 
-import { api } from "../api";
+import { api, get, post, put, del } from "../api";
 import Items from "../pages/Items";
 
-describe("Items page", () => {
-  // Reset mock call history and behavior before each test
+describe("Items interactions", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    cleanup(); 
   });
 
-  it("renders a list of items from the API", async () => {
+  it("adds, edits, and saves an item", async () => {
+    // Initial load: empty list
     api.mockResolvedValueOnce({
-      items: [
-        { id: 1, name: "Alpha", created_at: "2025-01-01T12:00:00Z" },
-        { id: 2, name: "Beta", created_at: "2025-01-02T12:00:00Z" },
-      ],
+      items: [],
       page: 1,
       pages: 1,
-      total: 2,
+      total: 0,
+      limit: 10,
+    });
+    // Add item
+    post.mockResolvedValueOnce({ id: 1, name: "Alpha" });
+    // Reload after add
+    api.mockResolvedValueOnce({
+      items: [{ id: 1, name: "Alpha" }],
+      page: 1,
+      pages: 1,
+      total: 1,
+      limit: 10,
+    });
+    // Edit item
+    put.mockResolvedValueOnce({ id: 1, name: "Alpha Edited" });
+
+    render(
+      <MemoryRouter initialEntries={["/items"]}>
+        <Routes>
+          <Route path="/items" element={<Items />} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    const addInput = screen.getAllByPlaceholderText("New item name")[0];
+    const addBtn = screen.getAllByText("Add Item")[0];
+
+    fireEvent.change(addInput, { target: { value: "Alpha" } });
+    fireEvent.click(addBtn);
+
+    const list = screen.getByRole("list");
+    const rowAlpha = await within(list).findByText(
+      (content, el) => el.tagName.toLowerCase() === "span" && content.includes("Alpha")
+    );
+    expect(rowAlpha).toBeInTheDocument();
+
+    // Start edit
+    const editBtn = within(rowAlpha.parentElement).getByText("Edit");
+    fireEvent.click(editBtn);
+
+    // Use screen since the span is replaced and detached
+    const editInput = screen.getByLabelText("Edit item name");
+    fireEvent.change(editInput, { target: { value: "Alpha Edited" } });
+
+    const saveBtn = screen.getByText("Save");
+    fireEvent.click(saveBtn);
+
+    const editedRow = await within(list).findByText(
+      (content, el) => el.tagName.toLowerCase() === "span" && content.includes("Alpha Edited")
+    );
+    expect(editedRow).toBeInTheDocument();
+  });
+
+  it("cancels edit", async () => {
+    api.mockResolvedValueOnce({
+      items: [{ id: 2, name: "Beta" }],
+      page: 1,
+      pages: 1,
+      total: 1,
       limit: 10,
     });
 
-    // If testing component requires router, ALWAYS use MemoryRouter
     render(
       <MemoryRouter initialEntries={["/items"]}>
         <Routes>
@@ -37,22 +97,44 @@ describe("Items page", () => {
       </MemoryRouter>
     );
 
-    // Shows loader text while fetching
-    expect(screen.getByText(/searching…/i)).toBeInTheDocument();
+    const list = screen.getByRole("list");
+    const rowBeta = await within(list).findByText(
+      (content, el) => el.tagName.toLowerCase() === "span" && content.includes("Beta")
+    );
 
-    // Items appear
-    expect(await screen.findByText("Alpha")).toBeInTheDocument();
-    expect(screen.getByText("Beta")).toBeInTheDocument();
+    const editBtn = within(rowBeta.parentElement).getByText("Edit");
+    fireEvent.click(editBtn);
 
-    // Loader disappears
-    // Await is necessary - React re-renders possibly in multiple passes
-    await waitFor(() =>
-      expect(screen.queryByText(/searching…/i)).not.toBeInTheDocument()
+    // Use screen since only one item
+    const cancelBtn = screen.getByText("Cancel");
+    fireEvent.click(cancelBtn);
+
+    // Re-find the span after cancel, as the original element is detached
+    const rowBetaAfter = await within(list).findByText(
+      (content, el) => el.tagName.toLowerCase() === "span" && content.includes("Beta")
+    );
+    expect(rowBetaAfter).toBeInTheDocument();
   });
 
-  it("renders an error banner when the API fails", async () => {
-    // Mock a rejected API call (network or server failure)
-    api.mockRejectedValueOnce(new Error("Network down"));
+  it("deletes an item", async () => {
+    // Initial load: one item
+    api.mockResolvedValueOnce({
+      items: [{ id: 3, name: "Gamma" }],
+      page: 1,
+      pages: 1,
+      total: 1,
+      limit: 10,
+    });
+    // Delete item
+    del.mockResolvedValueOnce({});
+    // Reload after delete (since it's the only item on page 1)
+    api.mockResolvedValueOnce({
+      items: [],
+      page: 1,
+      pages: 1,
+      total: 0,
+      limit: 10,
+    });
 
     render(
       <MemoryRouter initialEntries={["/items"]}>
@@ -62,11 +144,17 @@ describe("Items page", () => {
       </MemoryRouter>
     );
 
-    // Assert: the error message banner is displayed after the failure
-    await waitFor(() =>
-      expect(
-        screen.getByText(/failed to load items|network down/i)
-      ).toBeInTheDocument()
+    const list = screen.getByRole("list");
+    const rowGamma = await within(list).findByText(
+      (content, el) => el.tagName.toLowerCase() === "span" && content.includes("Gamma")
     );
+
+    const deleteBtn = within(rowGamma.parentElement).getByText("Delete");
+    fireEvent.click(deleteBtn);
+
+    const confirmBtn = within(rowGamma.parentElement).getByText("Confirm?");
+    fireEvent.click(confirmBtn);
+
+    await waitFor(() => expect(rowGamma).not.toBeInTheDocument());
   });
 });
