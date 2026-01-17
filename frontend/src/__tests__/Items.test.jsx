@@ -45,6 +45,7 @@ describe("Items page", () => {
     expect(screen.getByText("Beta")).toBeInTheDocument();
 
     // Loader disappears
+    // Await is necessary - React re-renders possibly in multiple passes
     await waitFor(() =>
       expect(screen.queryByText(/searching…/i)).not.toBeInTheDocument()
   });
