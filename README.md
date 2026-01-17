@@ -147,11 +147,15 @@ For frontend tests:
 
 ## 📸 Screenshots (to add later)
 
-![Screenshot of a functional CRUD app demonstrating all fundamentals of Full stack development](image.png)
-![Screenshot of backend testing done in powershell with every test being passed](image-1.png)
-![Screenshot of frontend testing done in powershell with every test being passed](image-4.png)
-![Screenshot of CI testing for the backend done through GitHub Actions - 100% succeeded.](image-2.png)
-![Screenshot of CI testing for the frontend done through GitHub Actions - 100% succeeded.](image-3.png)
+![Functional CRUD app demonstrating all fundamentals of Full stack development](./screenshots/symbols.png)
+![Frontend and backend testing with every test being passed](./screenshots/Tests.png)
+![Health Check](./screenshots/health.png)
+!["Updating" while awaiting success](./screenshots/updating.png)
+!["No results" if searching for non-existent term](./screenshots/no_results.png)
+!["Confirm" before deletion](./screenshots/delete_confirm.png)
+![Cannot save if name exists](./screenshots/unique.png)
+![Cannot Go next if last page](./screenshots/pagination.png)
+![Screenshot of CI testing done through GitHub Actions - 100% succeeded.](CI/CD.png)
 
 ---
 
