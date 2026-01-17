@@ -105,7 +105,7 @@ Implements full Create, Read, Update, and Delete (CRUD) functionality with a SQL
 
 For backend tests:
 
-1. Navigate to backend
+1. Navigate to backend 
    ```bash
    cd backend
    ```
@@ -116,7 +116,17 @@ For backend tests:
 
 - This will run all backend tests and return a verbose report for each test.
 
-For frontend tests: (not yet created)
+For frontend tests:
+
+1. Navigate to frontend
+   ```bash
+   cd frontend
+   ```
+2. Run tests
+   ```bash
+   pytest -v
+   ```
+- This will run all frontend tests and return a verbose report for each test.
 
 ---
 
