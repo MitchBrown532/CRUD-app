@@ -145,7 +145,7 @@ For frontend tests:
 
 ---
 
-## 📸 Screenshots (to add later)
+## 📸 Screenshots
 
 ![Functional CRUD app demonstrating all fundamentals of Full stack development](./screenshots/symbols.png)
 ![Frontend and backend testing with every test being passed](./screenshots/Tests.png)
