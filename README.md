@@ -124,7 +124,7 @@ For frontend tests:
    ```
 2. Run tests
    ```bash
-   pytest -v
+   npm run test
    ```
 - This will run all frontend tests and return a verbose report for each test.
 

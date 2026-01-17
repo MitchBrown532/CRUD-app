@@ -12,9 +12,10 @@
     "start:frontend": "npm run dev -c \"green\"",
     "start:backend": "cd ../backend && venv\\Scripts\\Activate && venv\\Scripts\\python.exe app.py -c \"blue\"",
     "test": "vitest",
-    "test:ci": "vitest --run"
-  },
-  "dependencies": {
+    "test:ci": "vitest --run",
+    "test:all": "concurrently -n frontend -c green \"npm run test\" && concurrently -n backend -c blue \"cd ../backend && venv\\Scripts\\python.exe -m pytest\""
+  },  
+"dependencies": {
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^7.9.3"
