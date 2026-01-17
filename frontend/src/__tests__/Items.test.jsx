@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 
-// IMPORTANT: mock the same module your hooks import (prevents real network calls)
+// IMPORTANT: Must mock BEFORE importing API - otherwise the real module is used!
 vi.mock("../api", () => ({
   api: vi.fn(),
 }));
@@ -17,7 +17,6 @@ describe("Items page", () => {
   });
 
   it("renders a list of items from the API", async () => {
-    // Mock a successful API response with two items
     api.mockResolvedValueOnce({
       items: [
         { id: 1, name: "Alpha", created_at: "2025-01-01T12:00:00Z" },
@@ -29,7 +28,7 @@ describe("Items page", () => {
       limit: 10,
     });
 
-    // Render the Items page within a minimal router context
+    // If testing component requires router, ALWAYS use MemoryRouter
     render(
       <MemoryRouter initialEntries={["/items"]}>
         <Routes>
@@ -44,6 +43,10 @@ describe("Items page", () => {
     // Items appear
     expect(await screen.findByText("Alpha")).toBeInTheDocument();
     expect(screen.getByText("Beta")).toBeInTheDocument();
+
+    // Loader disappears
+    await waitFor(() =>
+      expect(screen.queryByText(/searching…/i)).not.toBeInTheDocument()
   });
 
   it("renders an error banner when the API fails", async () => {
