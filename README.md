@@ -213,16 +213,26 @@ For frontend tests:
 
 ## 📸 Screenshots
 
-![Functional CRUD app demonstrating all fundamentals of Full stack development](./screenshots/symbols.png)
-![Frontend and backend testing with every test being passed](./screenshots/Tests.png)
-![Screenshot of CI testing done through GitHub Actions - 100% succeeded.](./screenshots/CI.png)
-![Vercel Deployment](./screenshots/Vercel_deployment.png)
-![Render Deployment](./screenshots/Render_Deployment.png)
 ![Health Check](./screenshots/health.png)
+
+![Functional CRUD app demonstrating all fundamentals of Full stack development](./screenshots/symbols.png)
+
+![Frontend and backend testing with every test being passed](./screenshots/Tests.png)
+
+![Screenshot of CI testing done through GitHub Actions - 100% succeeded.](./screenshots/CI.png)
+
+![Vercel Deployment](./screenshots/Vercel_deployment.png)
+
+![Render Deployment](./screenshots/Render_Deployment.png)
+
 !["No results" if searching for non-existent term](./screenshots/no_results.png)
+
 !["Saving" while awaiting success](./screenshots/updating.png)
+
 ![Cannot Go next if last page](./screenshots/pagination.png)
+
 !["Confirm" before deletion](./screenshots/delete_confirm.png)
+
 ![Cannot save if name exists](./screenshots/unique.png)
 
 ---
