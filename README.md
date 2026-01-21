@@ -2,30 +2,31 @@
 
 ## 📌 Project Description
 
-Practice project to learn full-stack development with React and Flask.  
-Implements full Create, Read, Update, and Delete (CRUD) functionality with a SQL database backend.
+Full-stack CRUD application demonstrating modern web development practices.  
+Implements complete Create, Read, Update, and Delete functionality with a SQL database backend, deployed to production with automated testing and CI/CD.
 
 ---
 
 ## 🚀 Tech Stack
 
-- **Frontend:** React (JS, JSX, HTML, CSS), TailwindCSS (styling not complete - may just use CSS), Vitest
-- **Backend:** Flask (Python), SQLAlchemy, Pytest
+- **Frontend:** React/Vite (JS, JSX, HTML, CSS), Vitest
+- **Backend:** Python (Flask), SQLAlchemy, Pytest, SQLite (dev), PostgreSQL (prod)
 - **Other Tools:** Git, Github Actions (CI/CD)
 
 ---
 
-## 📂 Features (Work in Progress)
+## 📂 Features
 
-- [✅] React frontend
+- [✅] React frontend with Vite
 - [✅] React Router for navigation
 - [✅] Backend API (Flask + SQLAlchemy)
-- [✅] Persistent SQL database 
+- [✅] Persistent SQL database (Postgres in prod, SQLite in dev)
 - [✅] CRUD operations: Create, Read, Update, Delete 
 - [✅] Filterable, sortable, and paginated lists
 - [✅] Pytest for backend tests
 - [✅] Vitest for frontend tests
-- [✅] Github workflow included
+- [✅] Github Actions CI/CD
+- [✅] Production deployment on Render & Vercel
 - [❌] Authentication (not implemented)
 
 ---
