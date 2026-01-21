@@ -23,7 +23,7 @@ def create_app(test_config: Optional[dict] = None):
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     # Configure DB (use DATABASE_URL env var for production, fallback to sqlite for dev)
-    database_url = os.environ.get("DATABASE_URL", "sqlite:///app.db")
+    database_url = "https://crud-backend-alay.onrender.com/"
     # For production with psycopg3, ensure the dialect is postgresql+psycopg
     if database_url.startswith("postgresql://"):
         database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
