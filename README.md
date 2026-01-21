@@ -26,7 +26,78 @@ Implements full Create, Read, Update, and Delete (CRUD) functionality with a SQL
 - [✅] Pytest for backend tests
 - [✅] Vitest for frontend tests
 - [✅] Github workflow included
-- [] Authentication (stretch goal)
+- [❌] Authentication (not implemented)
+
+---
+
+## 🏗️ Architecture
+
+Simple full-stack architecture:
+
+```
+Frontend (React/Vite) <--> Backend (Flask) <--> Database (Postgres/SQLite)
+```
+
+- Frontend: Single-page app with React Router, API calls via fetch.
+- Backend: REST API with Flask, SQLAlchemy ORM.
+- Database: Managed Postgres in production, SQLite for development.
+
+---
+
+## 🔌 API Routes
+
+| Method | Endpoint | Description | Body/Params |
+|--------|----------|-------------|-------------|
+| GET | /api/health | Health check | - |
+| GET | /api/items | List items with pagination/filtering | Query: q, page, limit, sort, order |
+| POST | /api/items | Create item | { "name": string } |
+| PUT | /api/items/:id | Update item | { "name": string } |
+| DELETE | /api/items/:id | Delete item | - |
+
+---
+
+## 🔐 Auth Flow
+
+No authentication implemented. All endpoints are public.
+
+---
+
+## 🧪 Testing Strategy
+
+- **Backend**: Pytest for unit tests (models) and integration tests (API endpoints). Tests run in isolated DB.
+- **Frontend**: Vitest for component tests (e.g., ItemRow). Uses jsdom for DOM simulation.
+- **CI/CD**: GitHub Actions runs all tests on push/PR. Includes linting and build checks.
+
+---
+
+## ⚖️ Tradeoffs
+
+- **No Authentication**: Kept simple to focus on CRUD. Can be added later with JWT.
+- **Offset Pagination**: Used offset-based pagination for simplicity. Cursor-based would be better for large datasets but adds complexity.
+- **No Request Validation**: No schema validation on inputs. Relies on manual checks.
+- **No Centralized Error Handling**: Errors handled ad-hoc in routes. Could be improved with Flask error handlers.
+- **SQLite in Dev**: Easy setup, but Postgres in prod for scalability.
+
+---
+
+## 🚀 Deployment
+
+### Backend (Render)
+1. Create Render account at render.com.
+2. Create a Postgres database in Render.
+3. Create a Web Service from your GitHub repo (set root to `backend`).
+4. Set build command: `pip install -r requirements.txt`
+5. Set start command: `gunicorn wsgi:app`
+6. Add env var: `DATABASE_URL` = your Postgres URL.
+
+### Frontend (Vercel)
+1. Create Vercel account at vercel.com.
+2. Import project from GitHub (set root to `frontend`).
+3. Set build command: `npm run build`
+4. Add env var: `VITE_API_URL` = your Render backend URL.
+
+### Live Demo
+After deployment, the frontend URL will be your live demo.
 
 ---
 

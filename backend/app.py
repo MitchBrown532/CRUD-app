@@ -4,6 +4,7 @@ from models import db, Item
 from math import ceil
 from sqlalchemy import func
 from typing import Optional
+import os
 
 # Create the app
 def create_app(test_config: Optional[dict] = None):
@@ -18,11 +19,11 @@ def create_app(test_config: Optional[dict] = None):
     """
     app = Flask(__name__)
 
-    # CORS: allow React dev server only
-    CORS(app, resources={r"/api/*": {"origins": ["http://localhost:5173"]}})
+    # CORS: allow all origins for production (update to specific domain later if needed)
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
 
-    # Configure DB (creates app.db in backend folder)
-    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///app.db" # URI not URL - Uniform Resource Identifier (URI) is standard for DB connection strings, URLs are a type of URI specifically used for location (e.g. web address)
+    # Configure DB (use DATABASE_URL env var for production, fallback to sqlite for dev)
+    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///app.db") # URI not URL - Uniform Resource Identifier (URI) is standard for DB connection strings, URLs are a type of URI specifically used for location (e.g. web address)
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Apply testing configs BEFORE init (if necessary)
