@@ -1,5 +1,0 @@
-{
-  "env": {
-    "VITE_API_URL": "https://crud-backend-alay.onrender.com"
-  }
-}

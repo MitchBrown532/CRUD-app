@@ -99,6 +99,9 @@ No authentication implemented. All endpoints are public.
 ### Live Demo
 After deployment, the frontend URL will be your live demo.
 
+**My Live Demo**: https://crud-app-flame-ten.vercel.app/
+- Note: Backend sometimes requires 1-2 minutes of 'spin up' after inactivity (Free version of Render)
+
 ---
 
 ## 🛠️ Installation & Setup
