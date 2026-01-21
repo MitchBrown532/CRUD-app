@@ -10,12 +10,12 @@ import os
 def create_app(test_config: Optional[dict] = None):
     """
     Using Factory pattern (instead of a global object). It is the industry standard for a reason:
-        1. Easier Testing:
-            Very easy to create temporary apps for testing, thus avoiding pollution
+        1. Testing:
+            Very easy to create isolated instances for testing - no worries about pollution.
         2. Flexible Config. 
-            Can easily add parameters (e.g. config name == "dev") to give more control.
+            Instantiate with different settings for dev, prod, testing, etc. - minimizes worries about global state.
         3. Scalability.
-            As code grows we will likely seperate it into Blueprints. Factory-style makes this transition smooth and easily scalable.
+            Modular and maintainable; easier to add features later (e.g. Blueprints)
     """
     app = Flask(__name__)
 
@@ -31,6 +31,10 @@ def create_app(test_config: Optional[dict] = None):
         app.config.update(test_config)
 
     db.init_app(app)
+
+    # Create tables if they don't exist (for production, use migrations instead)
+    with app.app_context():
+        db.create_all()
     
 
     # ---------------------- ROUTES ---------------------- #
