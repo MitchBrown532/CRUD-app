@@ -165,17 +165,6 @@ After deployment, the frontend URL will be your live demo.
    npm run start:backend
    ```
 
----
-
-## 🔌 API Endpoints
-
-- GET /api/items?q=&page=&limit=&sort=id|name|created_at&order=asc|desc
-- POST /api/items
-- PUT /api/items/:id
-- DELETE /api/items/:id
-
----
-
 ## 🧪 Tests
 
 For backend tests:
@@ -214,6 +203,8 @@ For frontend tests:
 - **Sorting Whitelist**: Only known columns (`id`, `name`, `created_at`) are accepted server-side to avoid invalid input/SQL injection vectors.
 - **Optimistic Delete**: Instant UI feedback with rollback on failure for a snappy feel.
 - **REST Semantics**: `201` for create, `204` for delete, descriptive `4xx` errors
+- **Production Deployment**: Backend on Render with Gunicorn/WSGI for scalability, frontend on Vercel for fast builds, using env vars for secure config.
+- **Database Adapter**: Switched to psycopg3 for Python 3.13 compatibility in production, with automatic dialect detection.
 - **Testing Strategy**:
   - **Backend**: Pytest covers CRUD, pagination/search, and sorting.
   - **Frontend**: Lightweight Vitest + React Testing Library smoke tests (list renders, errors render, etc.).
