@@ -213,17 +213,17 @@ For frontend tests:
 
 ## 📸 Screenshots
 
-![Frontend and backend testing with every test being passed](./screenshots/Tests.png)
+![Health Check](./screenshots/health.png)
+
+![Functional CRUD app demonstrating all fundamentals of Full stack development](./screenshots/symbols.png)
 
 ![Screenshot of CI testing done through GitHub Actions - 100% succeeded.](./screenshots/CI.png)
+
+![Frontend and backend testing with every test being passed](./screenshots/Tests.png)
 
 ![Vercel Deployment](./screenshots/Vercel_deployment.png)
 
 ![Render Deployment](./screenshots/Render_Deployment.png)
-
-![Health Check](./screenshots/health.png)
-
-![Functional CRUD app demonstrating all fundamentals of Full stack development](./screenshots/symbols.png)
 
 !["No results" if searching for non-existent term](./screenshots/no_results.png)
 
