@@ -23,7 +23,11 @@ def create_app(test_config: Optional[dict] = None):
     CORS(app, resources={r"/api/*": {"origins": "*"}})
 
     # Configure DB (use DATABASE_URL env var for production, fallback to sqlite for dev)
-    app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///app.db") # URI not URL - Uniform Resource Identifier (URI) is standard for DB connection strings, URLs are a type of URI specifically used for location (e.g. web address)
+    database_url = os.environ.get("DATABASE_URL", "sqlite:///app.db")
+    # For production with psycopg3, ensure the dialect is postgresql+psycopg
+    if database_url.startswith("postgresql://"):
+        database_url = database_url.replace("postgresql://", "postgresql+psycopg://", 1)
+    app.config["SQLALCHEMY_DATABASE_URI"] = database_url
     app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
     # Apply testing configs BEFORE init (if necessary)
@@ -31,6 +35,10 @@ def create_app(test_config: Optional[dict] = None):
         app.config.update(test_config)
 
     db.init_app(app)
+
+    # Create tables if they don't exist (for production, use migrations instead)
+    with app.app_context():
+        db.create_all()
     
 
     # ---------------------- ROUTES ---------------------- #
