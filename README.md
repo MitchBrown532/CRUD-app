@@ -11,7 +11,7 @@ Implements complete Create, Read, Update, and Delete functionality with a SQL da
 
 - **Frontend:** React/Vite (JS, JSX, HTML, CSS), Vitest
 - **Backend:** Python (Flask), SQLAlchemy, Pytest, SQLite (dev), PostgreSQL (prod)
-- **Other Tools:** Git, Github Actions (CI/CD)
+- **Other Tools:** Git, Github Actions (CI/CD), Docker, Vercel, Render
 
 ---
 
